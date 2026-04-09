@@ -1,0 +1,99 @@
+import bpy
+import random
+
+# OBJECTS
+fan1 = bpy.data.objects["Fan1"]
+fan2 = bpy.data.objects["Fan2"]
+
+light1 = bpy.data.objects["Light1"]
+light2 = bpy.data.objects["Light2"]
+light3 = bpy.data.objects["Light3"]
+
+board_text = bpy.data.objects.get("BoardText")
+
+students_list = [
+    bpy.data.objects["Student1"],
+    bpy.data.objects["Student2"],
+    bpy.data.objects["Student3"],
+    bpy.data.objects["Student4"],
+    bpy.data.objects["Student5"],
+]
+
+# GLOBAL STATES
+fan_speed = 0
+
+current_energy = 0
+target_energy = 0
+
+
+# 🎯 MAIN LOGIC (runs every few seconds)
+def smart_classroom():
+    global fan_speed, target_energy
+
+    temperature = random.randint(20, 40)
+    active_students = random.randint(0, len(students_list))
+
+    print("Temp:", temperature, "Students:", active_students)
+
+    # 👨‍🎓 STUDENTS VISIBILITY
+    for i, student in enumerate(students_list):
+        student.hide_set(i >= active_students)
+
+    # 💡 LIGHT LOGIC (set target)
+    if active_students > 0:
+        target_energy = 30000
+        light_status = "Lights ON"
+    else:
+        target_energy = 0
+        light_status = "Lights OFF"
+
+    # 🌀 FAN LOGIC
+    if temperature > 28 and active_students > 0:
+        fan_speed = 0.4
+        fan_status = "Fans ON"
+    else:
+        fan_speed = 0
+        fan_status = "Fans OFF"
+
+    # 📺 BOARD TEXT
+    if board_text:
+        board_text.data.body = (
+            f"Temp: {temperature}°C\n"
+            f"Students: {active_students}\n"
+            f"{fan_status}\n"
+            f"{light_status}"
+        )
+
+    return 5  # slow update
+
+
+# 🔁 FAN ANIMATION (continuous rotation)
+def animate_fans():
+    global fan_speed
+
+    fan1.rotation_euler.z += fan_speed
+    fan2.rotation_euler.z += fan_speed
+
+    return 0.05  # smooth animation
+
+
+# 💡 LIGHT ANIMATION (smooth glow effect)
+def animate_lights():
+    global current_energy, target_energy
+
+    if current_energy < target_energy:
+        current_energy += 500
+    elif current_energy > target_energy:
+        current_energy -= 500
+
+    light1.data.energy = current_energy
+    light2.data.energy = current_energy
+    light3.data.energy = current_energy
+
+    return 0.05
+
+
+# REGISTER TIMERS
+bpy.app.timers.register(smart_classroom)
+bpy.app.timers.register(animate_fans)
+bpy.app.timers.register(animate_lights)
